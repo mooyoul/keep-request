@@ -129,6 +129,12 @@ module.exports = exports = function (req, opts, callback) {
     var stream = fs.createWriteStream(path.join(options.dest, filename + '.dmp'));
     stream.write(buildRequestHeader(req) + '\n\n', 'utf8');
     req.on('end', function () {
+        if (req.body) {
+            stream.end(JSON.stringify(req.body), 'utf8');
+        } else {
+            stream.end();
+        }
+        
         if (typeof callback === 'function') callback(null);
         cleanup(options.keepFiles, options.dest);
     }).pipe(stream);
