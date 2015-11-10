@@ -1,6 +1,6 @@
 {
   "name": "keep-request",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Request dump helper for Node.js based Applications using Stream",
   "main": "index.js",
   "scripts": {
