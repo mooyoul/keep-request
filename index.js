@@ -58,7 +58,6 @@ function buildRequestHeader (req) {
  * Build raw HTTP Request Body from Request Object.
  */
 function buildRequestBody (req) {
-    console.log('req.body: ', req.body);
     if ((~ (req.headers['content-type'] || '').indexOf('x-www-form-urlencoded')) ||
             (~ (req.headers['content-type'] || '').indexOf('form-data'))) {
         return new Buffer(qs.stringify(req.body), 'utf8');
