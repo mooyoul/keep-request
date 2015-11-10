@@ -6,6 +6,7 @@ var path = require('path'),
     Promise = require('bluebird'),
     fs = Promise.promisifyAll(require('fs')),
     moment = require('moment'),
+    qs = require('qs'),
     _ = require('underscore');
 
 /**
@@ -51,6 +52,23 @@ function buildRequestHeader (req) {
         }).join('\n'); // Content-Length: 123 ...
 
     return head + '\n' + body;
+}
+
+/**
+ * Build raw HTTP Request Body from Request Object.
+ */
+function buildRequestBody (req) {
+    console.log('req.body: ', req.body);
+    if ((~ (req.headers['content-type'] || '').indexOf('x-www-form-urlencoded')) ||
+            (~ (req.headers['content-type'] || '').indexOf('form-data'))) {
+        return new Buffer(qs.stringify(req.body), 'utf8');
+    } else if (req.body instanceof Buffer) {
+        return req.body
+    } else if (typeof req.body === 'string') {
+        return new Buffer(req.body, 'utf8');
+    } else {
+        return new Buffer(JSON.stringify(req.body, null, 2), 'utf8');
+    }
 }
 
 
@@ -128,14 +146,18 @@ module.exports = exports = function (req, opts, callback) {
 
     var stream = fs.createWriteStream(path.join(options.dest, filename + '.dmp'));
     stream.write(buildRequestHeader(req) + '\n\n', 'utf8');
-    req.on('end', function () {
-        if (req.body) {
-            stream.end(JSON.stringify(req.body), 'utf8');
-        } else {
-            stream.end();
-        }
-        
+
+    if (req.body) {
+        stream.write(buildRequestBody(req));
+        onFinish();
+    }
+    else {
+        req.on('end', onFinish).pipe(stream);
+    }
+
+    function onFinish () {
+        stream.end();
         if (typeof callback === 'function') callback(null);
         cleanup(options.keepFiles, options.dest);
-    }).pipe(stream);
+    }
 };
